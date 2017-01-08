@@ -1,0 +1,13 @@
+
+{% extends "base.html" %}
+
+{% block content %}
+<h2>{{ error }}{{ likes }}<h2>
+<div class="main-title"></div>
+<h3><a href = "/blog/newpost">New Post</a></h3>
+<h5><br><br></h5>
+  {% for p in posts %}
+    {{ p.render() | safe }}
+    
+  {% endfor %}
+{% endblock %}

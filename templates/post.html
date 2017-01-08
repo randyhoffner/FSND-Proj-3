@@ -1,0 +1,48 @@
+
+<div class="post">
+  <div class="post-heading">
+
+    <div class="post-name">
+
+    </div>
+    <a href="/blog/{{p.key().id()}}">
+    <div class="post-title">
+
+      {{p.subject}} -posted by
+      {{p.created_by}}
+
+    </div>
+    </a>
+    <div class="post-date">
+      {{p.created.strftime("%b %d, %Y")}}
+    </div>
+  </div>
+
+  <div class="post-content">
+    {{p._render_text | safe}}
+  </div>
+
+  <br>
+  {{p.likes}}  like this post.
+  <br>
+  <br>
+  {% for c in p.comments %}
+    {{c.comment}} -
+    {{c.getUserName()}} commented.
+
+    <a href="/blog/editcomment/{{c.key().id()}}">(edit comment)</a>
+    <a href="/blog/deletecomment/{{c.key().id()}}">(delete comment)</a>
+    <br><br>
+  {% endfor %}
+
+
+<a href="/blog/newcomment/{{p.key().id()}}">(add new comment)</a>
+
+
+<div align = "right">
+  <a href="/blog/likepost/{{p.key().id()}}">Like</a>
+  <a href="/blog/unlikepost/{{p.key().id()}}">Unlike</a>
+  <a href="/blog/editpost/{{p.key().id()}}">Edit</a>
+  <a href="/blog/deletepost/{{p.key().id()}}">Delete</a>
+</div>
+</div>
