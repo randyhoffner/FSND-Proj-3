@@ -1,17 +1,7 @@
-<!DOCTYPE html>
+{% extends "base.html" %}
 
-<html>
-  <head>
-    <title>Signup Page</title>
-    <link type="text/css" rel="stylesheet" href="/static/main.css" />
-  </head>
-
-  <body>
-
-    <h1><a href="/blog" class="main-title" >
-        Randy's Blog
-    </a></h1>
+{% block content %}
 
     <h2>Welcome, {{username}}!</h2>
-  </body>
-</html>
+
+{% endblock %}

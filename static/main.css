@@ -28,6 +28,7 @@ body {
 
 .login-link:hover {
     text-decoration: underline;
+    color: red;
 }
 
 h1{
@@ -43,8 +44,15 @@ h2 {
     margin-bottom: 20px;
 }
 
-.error {
-    color: red;
+a.button {
+  -webkit-appearance: button;
+  -moz-apppearance: button;
+  appearance: button;
+  font-size: 12px
+  padding: 15px 32px;
+  text decoration: none;
+  color: initial;
+  display: inline-block;
 }
 
 label {
@@ -70,6 +78,12 @@ textarea {
   font-family: monospace;
 }
 
+input[type=password]{
+  width:  500px;
+  font-size: 20px;
+  padding: 2px;
+}
+
 input[type=submit] {
   font-size: 20px;
 }
@@ -82,7 +96,6 @@ input[type=submit] {
     text-align: center;
     margin-bottom: 30px;
     text-decoration: none;
-
 }
 
 .main-title:hover {
@@ -104,12 +117,11 @@ input[type=submit] {
     font-size: 22px;
     font-weight: bold;
     color: red;
-
 }
 
 .post-title:hover {
   color: blue;
-  text-decoration: line-through;
+  text-decoration: none;
 }
 
 a {
@@ -118,6 +130,7 @@ a {
 
 a:hover {
   text-decoration: underline;
+  color: red;
 }
 
 .post-name {
@@ -129,7 +142,6 @@ a:hover {
     right: 0px;
     bottom: 0px;
     color: #42f486;
-
 }
 
 .post-content {
