@@ -153,7 +153,7 @@ class Comment(db.Model):
 
 
 ##Handlers##
-##Blog handler.  (a)logs in user and sets a secure cookie; (b)logs user out; (c)initializes RequestHandler.
+##"BlogHandler".  (a)logs in user and sets a secure cookie; (b)logs user out; (c)initializes RequestHandler.
 class BlogHandler(webapp2.RequestHandler):
     def write(self, *a, **kw):
         self.response.out.write(*a, **kw)
