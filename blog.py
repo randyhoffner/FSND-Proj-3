@@ -30,20 +30,6 @@ def check_secure_val(secure_val):
     if secure_val == make_secure_val(val):
         return val
 
-USER_RE = re.compile(r"^[a-zA-Z0-9_-]{3,20}$")
-def valid_username(username):
-    return username and USER_RE.match(username)
-
-PASS_RE = re.compile(r"^.{3,20}$")
-def valid_password(password):
-    return password and PASS_RE.match(password)
-
-EMAIL_RE  = re.compile(r'^[\S]+@[\S]+\.[\S]+$')
-def valid_email(email):
-    return not email or EMAIL_RE.match(email)
-
-
-
 ##### user stuff
 def make_salt(length = 5):
     return ''.join(random.choice(letters) for x in xrange(length))
@@ -62,14 +48,15 @@ def users_key(group = 'default'):
     return db.Key.from_path('users', group)
 
 
-##Facilitates multiple blogs, and selects this particular blog as "default".
 def blog_key(name = 'default'):
+    """Facilitates multiple blogs, and selects this blog as default."""
     return db.Key.from_path('blogs', name)
 
 
 ##Models##
-##"User" model
+
 class User(db.Model):
+    """'User' model"""
     name = db.StringProperty(required = True)
     pw_hash = db.StringProperty(required = True)
     email = db.StringProperty()
@@ -98,8 +85,8 @@ class User(db.Model):
             return u
 
 
-##"Post" model
 class Post(db.Model):
+    """'Post' model"""
     subject = db.StringProperty(required = True)
     content = db.TextProperty(required = True)
     created = db.DateTimeProperty(auto_now_add = True)
@@ -129,8 +116,8 @@ class Post(db.Model):
         return Comment.all().filter('post_id = ', int(self.key().id()))
 
 
-##"Like" model
 class Like(db.Model):
+    """'Like' model"""
     user_id = db.IntegerProperty(required=True)
     post_id = db.IntegerProperty(required=True)
 
@@ -139,8 +126,8 @@ class Like(db.Model):
         return user.name
 
 
-##"Comment" model
 class Comment(db.Model):
+    """'Comment' model"""
     user_id = db.IntegerProperty(required = True)
     post_id = db.IntegerProperty(required = True)
     comment = db.TextProperty(required = True)
@@ -153,8 +140,14 @@ class Comment(db.Model):
 
 
 ##Handlers##
-##"BlogHandler".  (a)logs in user and sets a secure cookie; (b)logs user out; (c)initializes RequestHandler.
+
 class BlogHandler(webapp2.RequestHandler):
+
+    """BlogHandler.
+
+    Logs in user and sets a secure cookie; logs user out; initializes RequestHandler.
+
+    """
     def write(self, *a, **kw):
         self.response.out.write(*a, **kw)
 
@@ -191,21 +184,39 @@ def render_post(response, post):
     response.out.write(post.content)
 
 
-##"MainPage" handler.  Opens main page and directs user to blog page.
 class MainPage(BlogHandler):
-  def get(self):
+
+    """MainPage handler.
+
+    Opens main page and directs user to blog page.
+
+    """
+
+    def get(self):
       self.write("Hello, and welcome to Randy's Blog.  To get started, add /blog to the url.")
 
 
-##"BlogFront" handler.  Renders blog front page, including last 10 posts in descending order by time.  Also renders "signup", "login", and "New Post" links.
 class BlogFront(BlogHandler):
+
+    """BlogFront handler.
+
+    Renders blog front page, including last 10 posts in descending order by time.  Also renders 'signup', 'login', and 'New Post' links.
+
+    """
+
     def get(self):
         posts = db.GqlQuery('select * from Post order by created desc limit 10')
         self.render('front.html', posts = posts)
 
 
-##"PostPage" handler.  Ensures (a)that poster is legitimate; (b)that a post actually exists.  Renders permalink.html, the page containing the single post.
 class PostPage(BlogHandler):
+
+    """PostPage handler.
+
+    Ensures that poster is legitimate, and that a post actually exists.  Renders permalink.html, the page containing the single post.
+
+    """
+
     def get(self, post_id):
         key = db.Key.from_path('Post', int(post_id), parent=blog_key())
         post = db.get(key)
@@ -215,8 +226,14 @@ class PostPage(BlogHandler):
         self.render('permalink.html', post = post)
 
 
-##"NewPost" handler.  Ensures that (a)the poster is logged in; (b)that the post belongs ##to the logged-in individual; (c)that the post contains a subject and some ##content.
 class NewPost(BlogHandler):
+
+    """'NewPost' handler.
+
+    Ensures that (a)the poster is logged in; (b)that the post belongs ##to the logged-in individual; (c)that the post contains a subject and some content.
+
+    """
+
     def get(self):
         if self.user:
             self.render('newpost.html')
@@ -239,8 +256,13 @@ class NewPost(BlogHandler):
             self.render('newpost.html', subject=subject, content=content, error=error)
 
 
-##"LikePost" handler.  Ensure that (a)the liker is logged in; (b)the liker is not the author of the post; (c)the liker only likes the post once, by adding the liker to a list of likers.  Increments the number of "Likes".
 class LikePost(BlogHandler):
+
+    """'Like' handler.
+
+    Ensures that (a)the liker is logged in; (b)the liker is not the author of the post; (c)the liker only likes the post once.  Increments the number of "Likes".
+
+    """
     def get(self, post_id):
         if not self.user:
             self.redirect("/login?error=You must be logged in to Like a post")
@@ -261,8 +283,13 @@ class LikePost(BlogHandler):
                 self.redirect('/blog')
 
 
-##"UnlikePost" handler:  Ensure that (a)the unliker does not own the post; (b)the ##unliker has not already unliked the post. Decrement the number of likes, and remover the unliker from the list of likers.
 class UnlikePost(BlogHandler):
+
+    """'Unlike' handler
+
+    Ensures that the unliker does not own the postand that the #unliker has not already unliked the post. Decrements the number of likes, and removes the unliker from the list of likers.
+
+    """
 
     def get(self, post_id):
         key = db.Key.from_path('Post', int(post_id), parent=blog_key())
@@ -288,8 +315,13 @@ class UnlikePost(BlogHandler):
                 self.redirect('/blog')
 
 
-##"New Comment" handler.  Ensures that (a)the commenter is logged in; (b)the post exists.  Renders newcomment.html page.  If comment exists and is legitimate, renders updated permalink.html page.
 class NewComment(BlogHandler):
+    """'NewComment' handler.
+
+    Ensures that the commenter is logged in and that the post exists.  Renders newcomment.html page.  If comment exists and is legitimate, renders updated permalink.html page.
+
+    """
+
     def get(self, post_id):
         if not self.user:
             self.redirect('/login')
@@ -319,8 +351,14 @@ class NewComment(BlogHandler):
             self.render('permalink.html', post=post, error=error)
 
 
-##"EditComment" handler.  Ensures that comment editor is logged in; (b)that the ##comment actually exists; (c)that the comment editor owns the comment.  Renders ##editcomment.html page.  Ensures that the editcomment.html page contains ##information.  Updates comment.
 class EditComment(BlogHandler):
+
+    """'EditComment' handler.
+
+    Ensures that comment editor is logged in, that the comment actually exists. and that the comment editor owns the comment.  Renders editcomment.html page.  Ensures that the editcomment.html page contains information.  Updates comment.
+
+    """
+
     def get(self, comment_id):
         key = db.Key.from_path('Comment', int(comment_id))
         comment = db.get(key)
@@ -354,8 +392,14 @@ class EditComment(BlogHandler):
         return self.redirect('/login')
 
 
-##"DeleteComment" handler.  Ensures that (a)comment deleter is logged in; (b)comment deleter actually owns the comment.  Renders deletecomment.html page. Deletes comment and returns to '/blog' page.
 class DeleteComment(BlogHandler):
+
+    """'DeleteComment' handler.
+
+    Ensures that the comment deleter is logged in, and that the comment deleter actually owns the comment.  Renders deletecomment.html page. Deletes comment and returns to '/blog' page.
+
+    """
+
     def get(self, comment_id):
         key = db.Key.from_path('Comment', int(comment_id))
         comment = db.get(key)
@@ -383,8 +427,14 @@ class DeleteComment(BlogHandler):
             return self.redirect('/login')
 
 
-##"DeletePost" handler.  Ensures (a)deleter is logged in; (b)deleter owns the post.  Deletes post and returns to '/blog' page.
 class DeletePost(BlogHandler):
+
+    """'DeletePost' handler.
+
+    Ensures that deleter is logged in, and that deleter owns the post.  Deletes post and returns to '/blog' page.
+
+    """
+
     def get(self, post_id):
         key = db.Key.from_path('Post', int(post_id), parent=blog_key())
         post = db.get(key)
@@ -414,8 +464,14 @@ class DeletePost(BlogHandler):
             return self.redirect('/login')
 
 
-##"EditPost" handler.  Ensures (a)that post editor is logged in; (b)that the post editor owns the post.  Renders editpost.html page.  Ensures that editpost.html page contains subject and content information.  Updates post subject and content on permalink page and '/blog' page.
 class EditPost(BlogHandler):
+
+    """'EditPost' handler.
+
+    Ensures that the post editor is logged in, and that the post editor owns the post.  Renders editpost.html page.  Ensures that editpost.html page contains subject and content information.  Updates post subject and content on permalink page and '/blog' page.
+
+    """
+
     def get(self, post_id):
         key = db.Key.from_path('Post', int(post_id), parent=blog_key())
         post = db.get(key)
@@ -452,8 +508,14 @@ class EditPost(BlogHandler):
                         error=error)
 
 
-##"Signup" handler.  Renders signup-form.html.  Ensures submitted username, password, and optional email are valid, and that passwords match.  Stores parameters.
 class Signup(BlogHandler):
+
+    """'Signup' handler.
+
+    Renders signup-form.html.  Ensures submitted username, password, and optional email are valid, and that passwords match.  Stores parameters.
+
+    """
+
     def get(self):
         self.render('signup-form.html')
 
@@ -467,9 +529,17 @@ class Signup(BlogHandler):
         params = dict(username = self.username,
                       email = self.email)
 
+	USER_RE = re.compile(r"^[a-zA-Z0-9_-]{3,20}$")
+	def valid_username(username):
+   		return username and USER_RE.match(username)
+
         if not valid_username(self.username):
             params['error_username'] = "That's not a valid username."
             have_error = True
+
+        PASS_RE = re.compile(r"^.{3,20}$")
+	def valid_password(password):
+    	   return password and PASS_RE.match(password)
 
         if not valid_password(self.password):
             params['error_password'] = "That wasn't a valid password."
@@ -477,6 +547,10 @@ class Signup(BlogHandler):
         elif self.password != self.verify:
             params['error_verify'] = "Your passwords didn't match."
             have_error = True
+
+        EMAIL_RE  = re.compile(r'^[\S]+@[\S]+\.[\S]+$')
+	def valid_email(email):
+            return not email or EMAIL_RE.match(email)
 
         if not valid_email(self.email):
             params['error_email'] = "That's not a valid email."
@@ -491,10 +565,15 @@ class Signup(BlogHandler):
         raise NotImplementedError
 
 
-##"Register" handler. Registers new user; makes sure user does not already exist; renders welcome.html #page.
 class Register(Signup):
+
+    """'Register' handler.
+
+    Registers new user after making sure user does not already exist; renders welcome.html page.
+
+    """
+
     def done(self):
-        #make sure the user doesn't already exist
         u = User.by_name(self.username)
         if u:
             return self.redirect("/blog?error=That user already exists")
@@ -506,8 +585,14 @@ class Register(Signup):
             self.redirect('/welcome')
 
 
-##"Login" handler.  Renders login-form.html; checks username and password for validity; logs user in and returns to updated '/blog' page.
 class Login(BlogHandler):
+
+    """'Login' handler.
+
+    Renders login-form.html, checks username and password for validity, logs user in and returns to updated '/blog' page.
+
+    """
+
     def get(self):
         self.render('login-form.html')
 
@@ -524,15 +609,27 @@ class Login(BlogHandler):
             self.render('login-form.html', error = msg)
 
 
-##"Logout" handler.  Logs logged-in user out and returns to '/blog' page.
 class Logout(BlogHandler):
+
+    """'Logout' handler.
+
+    Logs logged-in user out and returns to '/blog' page.
+
+    """
+
     def get(self):
         self.logout()
         self.redirect('/blog')
 
 
-##"Welcome" handler.  Renders welcome.html page, wecloming newly signed-up user.
 class Welcome(BlogHandler):
+
+    """'Welcome' handler.
+
+    Renders welcome.html page, wecloming newly signed-up user.
+
+    """
+
     def get(self):
         if self.user:
             self.render('welcome.html', username = self.user.name)
